@@ -9,16 +9,7 @@ let package = Package(
     exclude: [
         "Config",
         "Database",
-        "Localization",
-        "Public",
-        "Resources",
         "Tests",
-	"Sources/App/TurnstileMain.swift",
-	"Sources/App/Models/TestUser.swift",
-	"Sources/App/Middleware/BasicAuthMiddleware.swift",
-	"Sources/App/Middleware/DigitsAuthMiddleware.swift",
-	"Sources/App/Collections/BaseCollection.swift",
-	"Sources/App/Collections/AuthCollection.swift",
     ]
 )
 
