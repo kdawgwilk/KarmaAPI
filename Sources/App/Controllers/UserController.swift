@@ -1,5 +1,6 @@
 import Vapor
 import HTTP
+import Turnstile
 
 
 struct UserController: ResourceRepresentable {
@@ -39,40 +40,5 @@ struct UserController: ResourceRepresentable {
             modify: update,
             destroy: delete
         )
-    }
-}
-
-extension UserController {
-    func login(request: Request) throws -> ResponseRepresentable {
-        let credentials = try DigitsCredentials(headers: request.headers)
-
-        try request.auth.login(credentials)
-
-        return try request.user()
-    }
-}
-
-extension Request {
-//    func user() throws -> User {
-//        if let userID = query?["user_id"]?.int,
-//            let user = try User.find(by: userID) {
-//            // TODO: Handle invalid :user_id
-//            return user
-//        } else {
-//            guard let json = json else { throw Abort.badRequest }
-//            return try User(node: json)
-//        }
-//    }
-
-    func user() throws -> User {
-//        guard let user = try auth.user() as? User else {
-//            throw Abort.custom(status: .badRequest, message: "Invalid user type.")
-//        }
-        guard
-            let token = headers["Authorization"],
-            let user = try User.query().filter("access_token", token).first() else {
-                throw Abort.custom(status: .forbidden, message: "Not authorized.")
-        }
-        return user
     }
 }

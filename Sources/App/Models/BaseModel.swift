@@ -38,11 +38,13 @@ class BaseModel {
 
 
 extension BaseModel: Equatable {
-//    static func ==<T: BaseModel>(lhs: T, rhs: T) -> Bool {
-//        return lhs.id == rhs.id
-//    }
+
     static func ==(lhs: BaseModel, rhs: BaseModel) -> Bool {
         return type(of: lhs) == type(of: rhs) && lhs.id == rhs.id
     }
 }
+
+//func ==<T: BaseModel>(lhs: T, rhs: T) -> Bool {
+//    return lhs.id == rhs.id
+//}
 
