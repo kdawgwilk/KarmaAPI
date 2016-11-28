@@ -15,11 +15,16 @@ final class User: BaseModel, Model {
     // Example ID: 723205272156524544
     var username: String
     var password = ""
-    var digitsID: String = ""
-    var phoneNumber: String = ""
+    var digitsID = ""
+    var phoneNumber = ""
     var accessToken = URandom().secureToken
     var apiKeyID = URandom().secureToken
     var apiKeySecret = URandom().secureToken
+
+    var firstName = ""
+    var lastName = ""
+    var email = ""
+    var imageURL = ""
 
     init(credentials: UsernamePassword) {
         self.username = credentials.username
@@ -37,13 +42,21 @@ final class User: BaseModel, Model {
      Initializer for Fluent
      */
     override init(node: Node, in context: Context) throws {
-        username = try node.extract("username")
-        password = try node.extract("password")
-        digitsID = try node.extract("digits_id")
-        phoneNumber = try node.extract("phone_number")
-        accessToken = try node.extract("access_token")
-        apiKeyID = try node.extract("api_key_id")
-        apiKeySecret = try node.extract("api_key_secret")
+        username        = try node.extract("username")
+        password        = try node.extract("password")
+
+        accessToken     = try node.extract("access_token")
+        apiKeyID        = try node.extract("api_key_id")
+        apiKeySecret    = try node.extract("api_key_secret")
+
+        digitsID        = try node.extract("digits_id")
+        phoneNumber     = try node.extract("phone_number")
+
+        firstName       = try node.extract("first_name")
+        lastName        = try node.extract("last_name")
+        email           = try node.extract("email")
+        imageURL        = try node.extract("image_url")
+
         try super.init(node: node, in: context)
     }
 
@@ -51,17 +64,27 @@ final class User: BaseModel, Model {
      Serializer for Fluent
      */
     override func makeNode(context: Context) throws -> Node {
-        return try Node(node: [
-            "id": id,
-            "created_on": createdOn,
-            "username": username,
-            "password": password,
-            "digits_id": digitsID,
-            "phone_number": phoneNumber,
-            "access_token": accessToken,
-            "api_key_id": apiKeyID,
-            "api_key_secret": apiKeySecret,
-        ])
+        var node = [String: NodeRepresentable]()
+
+        node["id"]              = id
+        node["created_on"]      = createdOn
+
+        node["username"]        = username
+        node["password"]        = password
+
+        node["access_token"]    = accessToken
+        node["api_key_id"]      = apiKeyID
+        node["api_key_secret"]  = apiKeySecret
+
+        node["digits_id"]       = digitsID
+        node["phone_number"]    = phoneNumber
+        
+        node["first_name"]      = firstName
+        node["last_name"]       = lastName
+        node["email"]           = email
+        node["image_url"]       = imageURL
+
+        return try Node(node: node)
     }
 
     func groups() throws -> Siblings<Group> {
@@ -166,11 +189,18 @@ extension User: Preparation {
             prepare(model: user)
             user.string("username")
             user.string("password")
-            user.string("digits_id")
-            user.string("phone_number")
+
             user.string("access_token")
             user.string("api_key_id")
             user.string("api_key_secret")
+
+            user.string("digits_id")
+            user.string("phone_number")
+
+            user.string("first_name")
+            user.string("last_name")
+            user.string("email")
+            user.string("image_url")
         }
     }
 
@@ -186,10 +216,18 @@ extension User {
         super.merge(updates: updates)
         username = updates.username
         password = updates.password
+
+        accessToken = updates.accessToken
+        apiKeyID = updates.apiKeyID
+        apiKeySecret = updates.apiKeySecret
+
         digitsID = updates.digitsID
         phoneNumber = updates.phoneNumber
-        accessToken = updates.accessToken
-        apiKeyID = updates.apiKeySecret
+
+        firstName = updates.firstName
+        lastName = updates.lastName
+        email = updates.email
+        imageURL = updates.imageURL
     }
 }
 

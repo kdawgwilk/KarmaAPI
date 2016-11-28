@@ -13,7 +13,9 @@
             "type-safe",
             "date",
             "sessions",
-            "auth"
+            "auth",
+            "basic-auth",
+            "token-auth"
         ],
         "client": [
 

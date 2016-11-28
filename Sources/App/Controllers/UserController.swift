@@ -1,10 +1,11 @@
-import Vapor
+import Foundation
+
+// Vapor
 import HTTP
-import Turnstile
+import Vapor
 
 
 struct UserController: ResourceRepresentable {
-    
     func index(request: Request) throws -> ResponseRepresentable {
         return try User.all().toJSON()
     }
