@@ -1,44 +1,76 @@
 import Vapor
 import HTTP
-import Fluent
+import FluentProvider
 
 
 struct GroupController: ResourceRepresentable {
 
     func index(request: Request) throws -> ResponseRepresentable {
-        return try request.user().groups().all().toJSON()
+        guard let user = request.auth.authenticated(User.self) else {
+            return try Group.all().makeJSON()
+        }
+        return try user.groups.all().makeJSON()
     }
 
     func show(request: Request, group: Group) throws -> ResponseRepresentable {
-        guard try group.users().includes(request.user()) else {
+        guard let user = request.auth.authenticated(User.self) else {
+            return group
+        }
+
+        guard try group.users.isAttached(user) else {
             throw Abort.notFound
         }
+
         return group
     }
 
     func create(request: Request) throws -> ResponseRepresentable {
-        var group = try request.group()
+        guard let json = request.json else {
+            throw Abort(.badRequest)
+        }
+
+        let group = try Group(json: json)
         try group.save()
-        var pivot = Pivot<User, Group>(try request.user(), group)
-        try pivot.save()
+
+        guard let user = request.auth.authenticated(User.self) else {
+            return group
+        }
+
+        try group.users.add(user)
         return group
     }
 
     func update(request: Request, group: Group) throws -> ResponseRepresentable {
-        guard try group.users().includes(request.user()) else {
-            throw Abort.notFound
+        guard let json = request.json else {
+            throw Abort(.badRequest)
         }
-        let new: Group = try request.group()
-        var group = group
+
+        let new = try Group(json: json)
+        let group = group
         group.merge(updates: new)
         try group.save()
+
+        guard let user = request.auth.authenticated(User.self) else {
+            return group
+        }
+
+        guard try group.users.isAttached(user) else {
+            throw Abort.notFound
+        }
+
         return group
     }
 
     func delete(request: Request, group: Group) throws -> ResponseRepresentable {
-        guard try group.users().includes(request.user()) else {
+        guard let user = request.auth.authenticated(User.self) else {
+            try group.delete()
+            return group
+        }
+
+        guard try group.users.isAttached(user) else {
             throw Abort.notFound
         }
+
         try group.delete()
         return group
     }
@@ -57,7 +89,7 @@ struct GroupController: ResourceRepresentable {
 extension GroupController {
     func score(request: Request, group: Group) throws -> ResponseRepresentable {
         let user = try request.user()
-        guard try group.users().includes(user) else {
+        guard try group.users.isAttached(user) else {
             throw Abort.notFound
         }
         let points = try Score.query().filter("user_id", user.id!).filter("group_id", group.id!).first()?.points ?? 0
@@ -70,7 +102,7 @@ extension Request {
         if let groupID = query?["group_id"]?.int,
             let group = try Group.find(by: groupID) {
             // TODO: Handle invalid :group_id
-            guard try group.users().includes(user()) else {
+            guard try group.users.isAttached(user()) else {
                 throw Abort.notFound
             }
             return group

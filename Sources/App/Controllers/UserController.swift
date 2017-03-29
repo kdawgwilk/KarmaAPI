@@ -7,7 +7,7 @@ import Vapor
 
 struct UserController: ResourceRepresentable {
     func index(request: Request) throws -> ResponseRepresentable {
-        return try User.all().toJSON()
+        return try User.all().makeJSON()
     }
     
     func show(request: Request, user: User) throws -> ResponseRepresentable {
@@ -15,14 +15,14 @@ struct UserController: ResourceRepresentable {
     }
 
     func create(request: Request) throws -> ResponseRepresentable {
-        var user = try request.user()
+        let user = try request.user()
         try user.save()
         return user
     }
     
     func update(request: Request, user: User) throws -> ResponseRepresentable {
         let new = try request.user()
-        var user = user
+        let user = user
         user.merge(updates: new)
         try user.save()
         return user

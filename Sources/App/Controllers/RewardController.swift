@@ -7,11 +7,11 @@ import Fluent
 struct RewardController: ResourceRepresentable {
 
     func index(request: Request) throws -> ResponseRepresentable {
-        return try request.group().rewards().all().toJSON()
+        return try request.group().rewards.all().makeJSON()
     }
 
     func show(request: Request, reward: Reward) throws -> ResponseRepresentable {
-        guard try reward.group().get()! == request.group() else {
+        guard try reward.group.get()! == request.group() else {
             throw Abort.notFound
         }
         return reward
@@ -19,24 +19,24 @@ struct RewardController: ResourceRepresentable {
 
     // FIXME: Needs to verify reward is being created in group user has access to
     func create(request: Request) throws -> ResponseRepresentable {
-        var reward = try request.reward()
+        let reward = try request.reward()
         try reward.save()
         return reward
     }
 
     func update(request: Request, reward: Reward) throws -> ResponseRepresentable {
-        guard try reward.group().get()! == request.group() else {
+        guard try reward.group.get()! == request.group() else {
             throw Abort.notFound
         }
         let new = try request.reward()
-        var reward = reward
+        let reward = reward
         reward.merge(updates: new)
         try reward.save()
         return reward
     }
 
     func delete(request: Request, reward: Reward) throws -> ResponseRepresentable {
-        guard try reward.group().get()! == request.group() else {
+        guard try reward.group.get()! == request.group() else {
             throw Abort.notFound
         }
         try reward.delete()
@@ -60,7 +60,7 @@ extension RewardController {
         let group = try request.group()
         let score: Score
 
-        var userReward = UserReward(reward: reward, group: group, user: user)
+        let userReward = try UserReward(reward: reward, group: group, user: user)
 
         guard let userID    = user.id,
             let groupID   = group.id else {
@@ -70,7 +70,7 @@ extension RewardController {
         if let scoreFound = try Score.query().filter("user_id", userID).filter("group_id", groupID).first() {
             score = scoreFound
         } else {
-            score = Score(group: group, user: user)
+            score = try Score(group: group, user: user)
         }
 
 

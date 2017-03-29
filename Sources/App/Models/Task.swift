@@ -3,52 +3,80 @@ import Fluent
 import Foundation
 
 
-final class Task: BaseModel, Model {
+final class Task: BaseModel {
     var name: String
-    var groupID: Node?
+    var groupID: Identifier
     var description: String?
     var points: Int
 
-    init(name: String, description: String? = nil, points: Int = 5, group: Group) {
-        self.name = name
-        self.groupID = group.id
-        self.points = points
+    init(name: String, description: String? = nil, points: Int = 5, group: Group) throws {
+        guard let groupID = group.id else {
+            throw Abort(.internalServerError, reason: "Failed to create Task")
+        }
+        self.name               = name
+        self.groupID            = groupID
+        self.points             = points
+
         super.init()
     }
 
-    override init(node: Node, in context: Context) throws {
-        name = try node.extract("name")
-        groupID = try node.extract("group_id")
-        description = try node.extract("description")
-        points = try node.extract("points") ?? 5
-        try super.init(node: node, in: context)
+    // MARK: Data Initializers
+
+    required convenience init(row: Row) throws {
+        try self.init(node: row)
     }
 
-    override func makeNode(context: Context) throws -> Node {
-        return try Node(node: [
-            "id": id,
-            "created_on": createdOn,
-            "name": name,
-            "group_id": groupID,
-            "description": description,
-            "points": points
-        ])
+    required convenience init(json: JSON) throws {
+        try self.init(node: json)
+    }
+
+    required init(node: Node) throws {
+        name                    = try node.get("name")
+        groupID                 = try node.get("group_id")
+        description             = try node.get("description")
+        points                  = try node.get("points") ?? 5
+
+        try super.init(node: node)
+    }
+
+    // MARK: Data Constructors
+
+    override func makeRow() throws -> Row {
+        return try makeNode(in: rowContext).converted()
+    }
+
+    override func makeJSON() throws -> JSON {
+        return try makeNode(in: jsonContext).converted()
+    }
+
+    override func makeNode(in context: Context?) throws -> Node {
+        var node = try super.makeNode(in: context)
+
+        try node.set("name", name)
+        try node.set("group_id", groupID)
+        try node.set("description", description)
+        try node.set("points", points)
+
+        return node
     }
 }
 
+// MARK: Preparations
+
 extension Task: Preparation {
     static func prepare(_ database: Database) throws {
-        try database.create("tasks") { task in
-            prepare(model: task)
-            task.string("name")
-            task.string("group_id")
-            task.string("description", optional: true)
-            task.int("points")
+        try database.create(self) { builder in
+            prepare(self, with: builder)
+            
+            builder.string("name")
+            builder.foreignId(for: Group.self)
+            builder.string("description", optional: true)
+            builder.int("points")
         }
     }
 
     static func revert(_ database: Database) throws {
-        try database.delete("tasks")
+        try database.delete(self)
     }
 }
 
@@ -57,17 +85,18 @@ extension Task: Preparation {
 extension Task {
     func merge(updates: Task) {
         super.merge(updates: updates)
-        name = updates.name
-        groupID = updates.groupID ?? groupID
-        description = updates.description ?? description
-        points = updates.points
+        
+        name                    = updates.name
+        groupID                 = updates.groupID
+        description             = updates.description ?? description
+        points                  = updates.points
     }
 }
 
 // MARK: Relationships
 
 extension Task {
-    func group() throws -> Parent<Group> {
-        return try parent(groupID)
+    var group: Parent<Task, Group> {
+        return parent(id: groupID)
     }
 }

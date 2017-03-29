@@ -5,11 +5,11 @@ import HTTP
 struct TaskController: ResourceRepresentable {
 
     func index(request: Request) throws -> ResponseRepresentable {
-        return try request.group().tasks().all().toJSON()
+        return try request.group().tasks.all().makeJSON()
     }
 
     func show(request: Request, task: Task) throws -> ResponseRepresentable {
-        guard try task.group().get()! == request.group() else {
+        guard try task.group.get()! == request.group() else {
             throw Abort.notFound
         }
         return task
@@ -17,24 +17,24 @@ struct TaskController: ResourceRepresentable {
 
     // FIXME: Needs to verify task is being created in group user has access to
     func create(request: Request) throws -> ResponseRepresentable {
-        var task = try request.task()
+        let task = try request.task()
         try task.save()
         return task
     }
 
     func update(request: Request, task: Task) throws -> ResponseRepresentable {
-        guard try task.group().get()! == request.group() else {
+        guard try task.group.get()! == request.group() else {
             throw Abort.notFound
         }
         let new = try request.task()
-        var task = task
+        let task = task
         task.merge(updates: new)
         try task.save()
         return task
     }
 
     func delete(request: Request, task: Task) throws -> ResponseRepresentable {
-        guard try task.group().get()! == request.group() else {
+        guard try task.group.get()! == request.group() else {
             throw Abort.notFound
         }
         try task.delete()
@@ -58,7 +58,7 @@ extension TaskController {
         let group = try request.group()
         let score: Score
 
-        var userTask = UserTask(task: task, group: group, user: user)
+        let userTask = try UserTask(task: task, group: group, user: user)
         try userTask.save()
 
         guard let userID    = user.id,
@@ -69,7 +69,7 @@ extension TaskController {
         if let scoreFound = try Score.query().filter("user_id", userID).filter("group_id", groupID).first() {
             score = scoreFound
         } else {
-            score = Score(group: group, user: user)
+            score = try Score(group: group, user: user)
         }
 
 
@@ -87,7 +87,7 @@ extension TaskController {
     func completed(request: Request) throws -> ResponseRepresentable {
         let group = try request.group()
 //        let tasksCompleted = 
-        return try group.userTasks().all().makeNode().converted(to: JSON.self)
+        return try group.userTasks.all().makeJSON()
     }
 }
 

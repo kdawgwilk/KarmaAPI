@@ -4,21 +4,5 @@
     "console": "terminal",
     "log": "console",
     "hash": "crypto",
-    "cipher": "crypto",
-    "middleware": {
-        "server": [
-            "file",
-            "abort",
-            "validation",
-            "type-safe",
-            "date",
-            "sessions",
-            "auth",
-            "basic-auth",
-            "token-auth"
-        ],
-        "client": [
-
-        ]
-    }
+    "cipher": "crypto"
 }
